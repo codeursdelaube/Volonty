@@ -146,8 +146,7 @@ export function EventCreateForm() {
 
       if (upErr) {
         console.error('Cover upload error:', upErr);
-        // Utiliser une URL d'objet locale temporaire si le bucket Supabase n'est pas encore configuré
-        setCoverImageUrl(URL.createObjectURL(file));
+        setError("Échec de l'hébergement de l'image sur Supabase Storage : " + upErr.message);
       } else {
         const { data: pubData } = supabase.storage
           .from(EVENT_COVERS_BUCKET)
@@ -155,7 +154,7 @@ export function EventCreateForm() {
         setCoverImageUrl(pubData.publicUrl);
       }
     } catch (err: any) {
-      setError("Erreur lors de l'upload de l'image.");
+      setError("Erreur lors de l'upload de l'image : " + (err?.message || 'Erreur réseau'));
     } finally {
       setUploadingImage(false);
     }
