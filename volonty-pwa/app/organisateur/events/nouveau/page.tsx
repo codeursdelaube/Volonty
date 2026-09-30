@@ -4,7 +4,7 @@ import { EventCreateForm } from '@/src/components/events/EventCreateForm';
 import { ArrowLeft, PlusCircle } from 'lucide-react';
 
 export default async function NouveauEventPage() {
-  await requireUser();
+  await requireUser('/organisateur/events/nouveau');
 
   return (
     <div className="min-h-screen py-10 bg-[#faf8f5]">

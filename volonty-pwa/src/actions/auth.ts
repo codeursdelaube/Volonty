@@ -54,7 +54,9 @@ export async function loginAction(formData: FormData): Promise<ActionResponse> {
     console.error('Error syncing user on login:', err);
   }
 
-  redirect('/events');
+  const next = formData.get('next');
+  const target = typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') ? next : '/events';
+  redirect(target);
 }
 
 export async function registerAction(formData: FormData): Promise<ActionResponse> {
@@ -111,7 +113,9 @@ export async function registerAction(formData: FormData): Promise<ActionResponse
     console.error('Error syncing user on register:', err);
   }
 
-  redirect('/events');
+  const next = formData.get('next');
+  const target = typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') ? next : '/events';
+  redirect(target);
 }
 
 export async function logoutAction() {

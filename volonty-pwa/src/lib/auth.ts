@@ -8,9 +8,12 @@ export async function getCurrentUser() {
 }
 
 /** Throws redirect to /connexion if no active session. */
-export async function requireUser() {
+export async function requireUser(returnPath?: string) {
   const user = await getCurrentUser();
   if (!user) {
+    if (returnPath) {
+      redirect(`/connexion?next=${encodeURIComponent(returnPath)}`);
+    }
     redirect('/connexion');
   }
   return user;

@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createEventAction } from '@/src/actions/events';
 import { createSupabaseBrowserClient } from '@/src/lib/supabase/client';
 const EVENT_COVERS_BUCKET = 'event-covers';
+const DRAFT_KEY = 'volonty_event_create_draft';
 import { 
   Calendar, 
   MapPin, 
@@ -14,7 +15,8 @@ import {
   AlertCircle, 
   ArrowRight,
   ExternalLink,
-  FileText
+  FileText,
+  RotateCcw
 } from 'lucide-react';
 
 export function EventCreateForm() {
@@ -39,6 +41,79 @@ export function EventCreateForm() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasDraft, setHasDraft] = useState(false);
+
+  // Charger le brouillon local au montage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        const d = JSON.parse(saved);
+        if (d.title) setTitle(d.title);
+        if (d.description) setDescription(d.description);
+        if (d.coverImageUrl) setCoverImageUrl(d.coverImageUrl);
+        if (d.startsAt) setStartsAt(d.startsAt);
+        if (d.endsAt) setEndsAt(d.endsAt);
+        if (d.location) setLocation(d.location);
+        if (d.city) setCity(d.city);
+        if (typeof d.slots === 'number') setSlots(d.slots);
+        if (Array.isArray(d.skills) && d.skills.length > 0) setSkills(d.skills);
+        if (typeof d.useExternalUrl === 'boolean') setUseExternalUrl(d.useExternalUrl);
+        if (d.externalApplicationUrl) setExternalApplicationUrl(d.externalApplicationUrl);
+        if (d.status) setStatus(d.status);
+        if (d.title || d.description) setHasDraft(true);
+      }
+    } catch {
+      // Ignorer
+    }
+  }, []);
+
+  // Sauvegarder automatiquement en continu
+  useEffect(() => {
+    try {
+      if (title || description || location) {
+        const dataToSave = {
+          title,
+          description,
+          coverImageUrl,
+          startsAt,
+          endsAt,
+          location,
+          city,
+          slots,
+          skills,
+          useExternalUrl,
+          externalApplicationUrl,
+          status,
+        };
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(dataToSave));
+        setHasDraft(true);
+      }
+    } catch {
+      // Ignorer
+    }
+  }, [title, description, coverImageUrl, startsAt, endsAt, location, city, slots, skills, useExternalUrl, externalApplicationUrl, status]);
+
+  function clearDraft() {
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+      setTitle('');
+      setDescription('');
+      setCoverImageUrl('');
+      setStartsAt('');
+      setEndsAt('');
+      setLocation('');
+      setCity('Lomé');
+      setSlots(10);
+      setSkills(['Accueil', 'Logistique']);
+      setUseExternalUrl(false);
+      setExternalApplicationUrl('');
+      setStatus('DRAFT');
+      setHasDraft(false);
+    } catch {
+      // Ignorer
+    }
+  }
 
   function addSkill() {
     if (skillInput.trim() && !skills.includes(skillInput.trim())) {
@@ -110,6 +185,9 @@ export function EventCreateForm() {
     if (!res.success) {
       setError(res.error || 'Erreur lors de la création.');
     } else {
+      try {
+        localStorage.removeItem(DRAFT_KEY);
+      } catch {}
       // Rediriger vers la page d'édition pour configurer le formulaire interne ou gérer l'événement
       router.push(`/organisateur/events/${res.eventId}`);
     }
@@ -118,6 +196,23 @@ export function EventCreateForm() {
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-6 sm:p-10 border border-stone-200/90 shadow-sm space-y-8">
       
+      {hasDraft && (
+        <div className="p-3 rounded-2xl bg-amber-50/80 border border-amber-200/60 flex items-center justify-between text-xs text-amber-900">
+          <span className="flex items-center gap-1.5 font-medium">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Brouillon restauré & sauvegardé automatiquement en direct
+          </span>
+          <button
+            type="button"
+            onClick={clearDraft}
+            className="text-[11px] font-semibold text-stone-500 hover:text-red-600 flex items-center gap-1 transition-colors"
+          >
+            <RotateCcw className="w-3 h-3" />
+            Réinitialiser
+          </button>
+        </div>
+      )}
+
       {error && (
         <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />

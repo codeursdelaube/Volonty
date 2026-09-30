@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export default async function MesCandidaturesPage() {
-  await requireUser();
+  await requireUser('/mes-candidatures');
   const applications = await getMyApplications();
 
   return (

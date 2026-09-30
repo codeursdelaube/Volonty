@@ -4,7 +4,7 @@ import { ProfileManager } from '@/src/components/profile/ProfileManager';
 import { User } from 'lucide-react';
 
 export default async function ProfilPage() {
-  const user = await requireUser();
+  const user = await requireUser('/profil');
   const { volunteerProfile, organizerProfile } = await getUserProfiles();
 
   return (

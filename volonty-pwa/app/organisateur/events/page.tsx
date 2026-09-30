@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 export default async function OrganisateurEventsPage() {
-  await requireUser();
+  await requireUser('/organisateur/events');
   const events = await getOrganizerEventsWithStats();
 
   return (
