@@ -201,8 +201,8 @@ export async function updateApplicationStatusAction(params: {
     return { success: false, error: 'Action non autorisée' };
   }
 
-  const now = new Date();
-  let emailSentDate: Date | null = details.decisionEmailSentAt;
+  const now = new Date().toISOString();
+  let emailSentDate: string | null = details.decisionEmailSentAt;
 
   // Envoi d'email si demandé
   if (params.sendEmail && details.volunteerEmail) {
