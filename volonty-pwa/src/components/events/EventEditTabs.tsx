@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateEventAction, setEventStatusAction, deleteEventAction } from '@/src/actions/events';
 import { saveEventFormAction } from '@/src/actions/forms';
+import { createSupabaseBrowserClient } from '@/src/lib/supabase/client';
+const EVENT_COVERS_BUCKET = 'event-covers';
 import { 
   FileText, 
   Settings, 
@@ -15,7 +17,8 @@ import {
   AlertCircle, 
   Send,
   Eye,
-  Inbox
+  Inbox,
+  UploadCloud
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -77,7 +80,40 @@ export function EventEditTabs({ event, form }: EventEditTabsProps) {
   );
 
   const [saving, setSaving] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  async function handleCoverUpload(file: File) {
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+    if (!allowed.includes(file.type)) {
+      setMessage({ type: 'error', text: 'Format non supporté. Utilisez JPG, PNG ou WebP.' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage({ type: 'error', text: "L'image ne doit pas dépasser 5 Mo." });
+      return;
+    }
+    try {
+      setUploadingCover(true);
+      const supabase = createSupabaseBrowserClient();
+      const ext = file.name.split('.').pop() || 'jpg';
+      const path = `covers/${event.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from(EVENT_COVERS_BUCKET)
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) {
+        setMessage({ type: 'error', text: 'Échec de l\'upload : ' + upErr.message });
+        return;
+      }
+      const { data: pubData } = supabase.storage.from(EVENT_COVERS_BUCKET).getPublicUrl(path);
+      setCoverImageUrl(pubData.publicUrl);
+      setMessage({ type: 'success', text: 'Image téléversée avec succès.' });
+    } catch (err: any) {
+      setMessage({ type: 'error', text: 'Erreur lors de l\'upload : ' + (err?.message || 'Erreur réseau') });
+    } finally {
+      setUploadingCover(false);
+    }
+  }
 
   function addField() {
     setFields([
@@ -412,17 +448,50 @@ export function EventEditTabs({ event, form }: EventEditTabsProps) {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1.5">
-                  Image de couverture (URL)
+              <div className="space-y-3">
+                <label className="block text-xs font-semibold text-stone-700">
+                  Image de couverture
                 </label>
-                <input
-                  type="url"
-                  value={coverImageUrl}
-                  onChange={(e) => setCoverImageUrl(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full px-4 py-3 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white transition-all text-stone-900"
-                />
+
+                {/* Upload fichier */}
+                <div className="border-2 border-dashed border-stone-200 rounded-2xl p-4 text-center hover:border-amber-400 transition-colors bg-stone-50/50">
+                  <UploadCloud className="w-5 h-5 text-amber-500 mx-auto mb-1" />
+                  <p className="text-[11px] text-stone-600 font-medium">Téléverser (JPG, PNG, WebP — max 5 Mo)</p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploadingCover}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleCoverUpload(f);
+                    }}
+                    className="mt-2 block w-full text-[11px] text-stone-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[11px] file:font-semibold file:bg-amber-100 file:text-amber-800 cursor-pointer"
+                  />
+                  {uploadingCover && <p className="text-[11px] text-amber-600 mt-1 animate-pulse">Téléversement en cours...</p>}
+                </div>
+
+                {/* URL manuelle */}
+                <div>
+                  <p className="text-[11px] text-stone-500 mb-1">Ou renseignez une URL directe :</p>
+                  <input
+                    type="url"
+                    value={coverImageUrl}
+                    onChange={(e) => setCoverImageUrl(e.target.value)}
+                    placeholder="https://..."
+                    className="w-full px-3 py-2.5 text-xs bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white transition-all text-stone-900"
+                  />
+                </div>
+
+                {/* Preview */}
+                {coverImageUrl && !uploadingCover && (
+                  <div className="relative h-32 w-full rounded-xl overflow-hidden border border-stone-200">
+                    <img
+                      src={coverImageUrl}
+                      alt="Aperçu de la couverture"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="pt-4 border-t border-stone-100 flex items-center justify-between">
