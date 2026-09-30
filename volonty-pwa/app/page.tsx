@@ -15,6 +15,8 @@ import {
   HeartHandshake
 } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   // Récupérer les événements réels publiés depuis la base Prisma 8
   const publishedEvents = await db.orm.public.Event

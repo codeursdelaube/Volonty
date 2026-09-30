@@ -14,7 +14,6 @@ import {
   CheckCircle2, 
   Clock, 
   XCircle,
-  Mail,
   ArrowLeft
 } from 'lucide-react';
 
@@ -123,16 +122,15 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
 
               {/* Organizer Badge */}
               {event.organizerProfile && (
-                <div className="inline-flex items-center gap-3 p-3 rounded-2xl bg-stone-50 border border-stone-200">
+                <div className="inline-flex items-center gap-3 p-2.5 pr-4 rounded-2xl bg-stone-50 border border-stone-200">
                   <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-sm">
                     {event.organizerProfile.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-stone-400 block">
+                      Organisé par
+                    </span>
                     <p className="text-xs font-bold text-stone-900">{event.organizerProfile.name}</p>
-                    <p className="text-[11px] text-stone-500 flex items-center gap-1">
-                      <Mail className="w-3 h-3 text-stone-400" />
-                      {event.organizerProfile.contactEmail}
-                    </p>
                   </div>
                 </div>
               )}

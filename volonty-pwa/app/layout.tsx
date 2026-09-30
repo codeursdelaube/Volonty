@@ -3,6 +3,7 @@ import { Playfair_Display, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { Navbar } from '@/src/components/layout/Navbar';
 import { Footer } from '@/src/components/layout/Footer';
+import { RefreshOffersButton } from '@/src/components/ui/RefreshOffersButton';
 
 const playfair = Playfair_Display({
   variable: '--font-playfair',
@@ -28,12 +29,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" className={`${playfair.variable} ${plusJakarta.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-[#fffdfa] text-stone-900 selection:bg-amber-100 selection:text-amber-900 font-sans">
+      <body className="min-h-full flex flex-col bg-[#fffdfa] text-stone-900 selection:bg-amber-100 selection:text-amber-900 font-sans relative">
         <Navbar />
         <main className="flex-1">
           {children}
         </main>
         <Footer />
+        <RefreshOffersButton />
       </body>
     </html>
   );

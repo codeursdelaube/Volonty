@@ -177,7 +177,10 @@ export async function getPublicEvents(filters?: {
   const organizers = await Promise.all(
     organizerIds.map(async (uid) => {
       const org = await db.orm.public.OrganizerProfile.where({ userId: uid }).first();
-      return { userId: uid, profile: org };
+      return { 
+        userId: uid, 
+        profile: org ? { name: org.name } : null 
+      };
     })
   );
 
@@ -212,7 +215,10 @@ export async function getEventDetails(eventId: string) {
 
   return {
     ...event,
-    organizerProfile,
+    organizerProfile: organizerProfile ? {
+      name: organizerProfile.name,
+      description: organizerProfile.description,
+    } : null,
     form: form ? { ...form, fields: formFields } : null,
     totalApplications: applications.length,
     acceptedCount,

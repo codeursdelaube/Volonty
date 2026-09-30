@@ -41,10 +41,14 @@ export async function GET(request: Request) {
 
       // Redirection sécurisée
       const targetPath = next.startsWith('/') && !next.startsWith('//') ? next : '/events';
-      return NextResponse.redirect(new URL(targetPath, requestUrl.origin));
+      const forwardedHost = request.headers.get('x-forwarded-host');
+      const origin = forwardedHost ? `https://${forwardedHost}` : requestUrl.origin;
+      return NextResponse.redirect(new URL(targetPath, origin));
     }
   }
 
   // En cas d'erreur
-  return NextResponse.redirect(new URL('/connexion?error=oauth', requestUrl.origin));
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const origin = forwardedHost ? `https://${forwardedHost}` : requestUrl.origin;
+  return NextResponse.redirect(new URL('/connexion?error=oauth', origin));
 }

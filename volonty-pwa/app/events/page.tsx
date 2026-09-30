@@ -10,6 +10,7 @@ interface EventsPageProps {
     q?: string;
   }>;
 }
+export const dynamic = 'force-dynamic';
 
 export default async function EventsPage({ searchParams }: EventsPageProps) {
   const params = await searchParams;
