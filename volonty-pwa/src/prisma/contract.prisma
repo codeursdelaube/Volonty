@@ -1,0 +1,149 @@
+// use prisma-8
+
+model User {
+  id        String         @id @default(uuid())
+  email     String         @unique
+  createdAt DateTimeString @default(now())
+
+  volunteerProfile  VolunteerProfile?
+  organizerProfile  OrganizerProfile?
+  events            Event[]
+  applications      Application[]
+
+  @@rls
+}
+
+model VolunteerProfile {
+  id           String         @id @default(uuid())
+  userId       String         @unique
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName     String
+  age          Int?
+  city         String?
+  bio          String?
+  availability String?
+  skills       String[]
+  createdAt    DateTimeString @default(now())
+
+  @@rls
+}
+
+model OrganizerProfile {
+  id           String         @id @default(uuid())
+  userId       String         @unique
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  description  String?
+  contactEmail String
+  createdAt    DateTimeString @default(now())
+
+  @@rls
+}
+
+enum EventStatus {
+  @@type("pg/text@1")
+  DRAFT      = "DRAFT"
+  PUBLISHED  = "PUBLISHED"
+  CLOSED     = "CLOSED"
+}
+
+model Event {
+  id                     String         @id @default(uuid())
+  organizerId            String
+  organizer              User           @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  title                  String
+  description            String
+  coverImageUrl          String?
+  startsAt               DateTimeString
+  endsAt                 DateTimeString
+  location               String
+  city                   String
+  slots                  Int
+  skillsWanted           String[]
+  status                 EventStatus
+  externalApplicationUrl String?
+  createdAt              DateTimeString @default(now())
+
+  form         Form?
+  applications Application[]
+
+  @@index([status])
+  @@index([city])
+  @@index([organizerId])
+  @@rls
+}
+
+enum FormFieldType {
+  @@type("pg/text@1")
+  SHORT_TEXT    = "SHORT_TEXT"
+  LONG_TEXT     = "LONG_TEXT"
+  SINGLE_CHOICE = "SINGLE_CHOICE"
+  FILE          = "FILE"
+}
+
+model Form {
+  id          String      @id @default(uuid())
+  eventId     String      @unique
+  event       Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  fields      FormField[]
+
+  @@rls
+}
+
+model FormField {
+  id       String        @id @default(uuid())
+  formId   String
+  form     Form          @relation(fields: [formId], references: [id], onDelete: Cascade)
+  label    String
+  type     FormFieldType
+  required Boolean
+  order    Int
+  options  String[]
+
+  answers ApplicationAnswer[]
+
+  @@index([formId])
+  @@rls
+}
+
+enum ApplicationStatus {
+  @@type("pg/text@1")
+  SUBMITTED = "SUBMITTED"
+  ACCEPTED  = "ACCEPTED"
+  REJECTED  = "REJECTED"
+}
+
+model Application {
+  id                  String            @id @default(uuid())
+  eventId             String
+  event               Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  volunteerId         String
+  volunteer           User              @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  status              ApplicationStatus
+  submittedAt         DateTimeString    @default(now())
+  decidedAt           DateTimeString?
+  decisionEmailSentAt DateTimeString?
+
+  answers ApplicationAnswer[]
+
+  @@unique([eventId, volunteerId])
+  @@index([eventId])
+  @@index([volunteerId])
+  @@rls
+}
+
+model ApplicationAnswer {
+  id            String      @id @default(uuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  fieldId       String
+  field         FormField   @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  textValue     String?
+  fileUrl       String?
+
+  @@index([applicationId])
+  @@index([fieldId])
+  @@rls
+}
